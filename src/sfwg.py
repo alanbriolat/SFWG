@@ -2,7 +2,7 @@
 __author__ = "Alan Briolat <alan@thev0id.net>"
 __version__ = "0.1.1"
 
-import getopt, sys, os, commands, string
+import getopt, sys, os
 
 from sfw import *
 from configfile import *
@@ -22,10 +22,8 @@ Created by %s""" % (__version__, __author__)
 def showhelp():
 	print """sfwg - Simple FireWall Generator Version %s
 
-Usage: sfwg [OPTIONS] [OUTFILE]
+Usage: sfwg [OPTIONS] [CONFIGDIR...]
 
-  -c, --configdir=DIR   Path to directory containing forwards.conf and 
-                        services.conf
   -f, --forwards=FILE   Path to file containing port forwarding configuration
   -i, --icmp            Allow ICMP packets on WAN interfaces
   -I, --icmp-rate=COUNT Maximum rate to allow ICMP packets on WAN interfaces
@@ -35,6 +33,7 @@ Usage: sfwg [OPTIONS] [OUTFILE]
                         if port forwarding is used
       --no-find         Do not check current directory and /etc/sfwg for 
                         services.conf and forwards.conf if not specified
+  -o, --outfile=FILE    File to save the resulting script to
   -s, --services=FILE   Path to file containing configuration for ports on 
                         which connections should be accepted
   -w, --wan=IF[,IF...]  All interfaces from which traffic is untrusted
@@ -51,36 +50,32 @@ Created by %s""" % (__version__, __author__)
 
 # }}}
 
-shortopts = "c:f:iI:l:ns:w:x"
-longopts = ("configdir=", "forwards=", "icmp", "icmp-rate=", "lan=", "nat", \
-        "no-find", "services=", "wan=", "execute", "help", "version")
-
-opts, args = getopt.getopt(sys.argv[1:], shortopts, longopts)
-
 if __name__ == "__main__":
+
+    shortopts = "f:iI:l:no:s:w:x"
+    longopts = ("forwards=", "icmp", "icmp-rate=", "lan=", "nat", "outfile=", \
+            "no-find", "services=", "wan=", "execute", "help", "version")
+
+    opts, args = getopt.getopt(sys.argv[1:], shortopts, longopts)
+
     if ("--help", "") in opts:
         showhelp()
     elif ("--version", "") in opts:
         showversion()
     else:
 
+        # Set default options
         forwards = []
         services = []
         outfile = None
         findconfig = True
         execute = False
 
+        # Create a new firewall object
         fw = SFW()
 
         for opt, val in opts:
-            if opt in ("--configdir", "-c"):
-                f = os.path.join(val, 'forwards.conf')
-                s = os.path.join(val, 'services.conf')
-                if os.path.isfile(f) and os.access(f, os.R_OK):
-                    forwards.append(f)
-                if os.path.isfile(s) and os.access(s, os.R_OK):
-                    services.append(s)
-            elif opt in ("--forwards", "-f"):
+            if opt in ("--forwards", "-f"):
                 path = os.path.abspath(val)
                 if os.path.isfile(path) and os.access(path, os.R_OK):
                     forwards.append(path)
@@ -94,6 +89,8 @@ if __name__ == "__main__":
                 fw.enable_nat()
             elif opt in ("--no-find"):
                 findconfig = False
+            elif opt in ("--outfile", "-o"):
+                outfile = os.path.abspath(val)
             elif opt in ("--services", "-s"):
                 path = os.path.abspath(val)
                 if os.path.isfile(path) and os.access(path, os.R_OK):
@@ -103,6 +100,17 @@ if __name__ == "__main__":
             elif opt in ("--execute", "-x"):
                 execute = True
 
+        # Add configs from config dirs
+        if len(args) > 0:
+            for arg in args:
+                f = os.path.join(arg, 'forwards.conf')
+                s = os.path.join(arg, 'services.conf')
+                if os.path.isfile(f) and os.access(f, os.R_OK):
+                    forwards.append(f)
+                if os.path.isfile(s) and os.access(s, os.R_OK):
+                    services.append(s)
+
+        # Use /etc/sfwg/*.conf files if none specified
         if not forwards and not services and findconfig:
             gforwards = '/etc/sfwg/forwards.conf'
             gservices = '/etc/sfwg/services.conf'
@@ -116,52 +124,55 @@ if __name__ == "__main__":
             if forwards or services:
                 print >>sys.stderr, "A default configuration path has been used - to disable this use --no-find"
 
-        if not findconfig and not services and not forwards:
-            print >>sys.stderr, "One anally-retentive firewall coming right up!"
-            
+        # Parse the configuration files for rules
         try:
             if forwards:
-                fw.enable_nat()
+                #fw.enable_nat()
                 for path in forwards:
                     parsefile(path, (True, False, False, False), fw.addforward)
 
             if services:
                 for path in services:
                     parsefile(path, (True, False), fw.addservice)
+        # Print error for bad configuration lines
         except ConfigError, e:
             print >>sys.stderr, "%s\nin %s at line %s" % (e.message, e.file, e.linenum)
             raise
 
         try:
-            if len(args) > 0:
-                path = os.path.abspath(args[0])
+            # If a output file is specified, try and write script to it
+            if outfile:
+                path = os.path.abspath(outfile)
                 if os.path.isfile(path):
                     if os.access(path, os.W_OK):
                         print >>sys.stderr, "Warning: file %s exists!" % (path)
                         print >>sys.stderr, "Backing it up to %s.bak" % (path)
                         os.rename(path, path + '.bak')
-                        outfile = open(path, "w")
-                        print >>outfile, fw.makescript()
-                        outfile.close()
+                        fo = open(path, "w")
+                        print >>fo, fw.makescript()
+                        fo.close()
                     else:
                         print >>sys.stderr, "You do not have permission to modify %s" % (path)
                 elif os.path.isdir(os.path.dirname(path)) and os.access(os.path.dirname(path), os.W_OK):
-                    outfile = open(path, "w")
-                    print >>outfile, fw.makescript()
-                    outfile.close()
-                    
+                    fo = open(path, "w")
+                    print >>fo, fw.makescript()
+                    fo.close()
                 else:
-                    print >>sys.stderr, "Could not create %s!"
+                    print >>sys.stderr, "Could not create %s!" % (path)
                     print >>sys.stderr, "Please check that the file or its parent directory exists and is writable"
+            # If no output file, print to stdout
             else:
                 print fw.makescript()
-
+            
+            # If the execute option was passed, check privileges of the current
+            # user then execute the script
             if execute:
                 if os.geteuid() == 0:
                     os.system(fw.makescript())
                 else:
                     print >>sys.stderr, "Must be root to modify iptables settings"
 
+        # Print any error generated when trying to make the script
         except SFWError, e:
             print >>sys.stderr, e.message
             raise
