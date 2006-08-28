@@ -49,15 +49,20 @@ class Forward:
             else:
                 self.protocols = set(protocols)
 
-        if not re.match("^[0-9]{1,3}(\.[0-9]{1,3}){3,3}$", dest):
-            raise "Destination must be an IP address - later versions will support hostnames"
-        else:
-            self.destination = dest
-
-        if not dport:
-            self.destport = None
+        # Work out destination
+        if not dest:
+            if not dport:
+                # No dest (localhost) + no port changing = pointless rule!
+                raise "No destination and no destport specified - this will not generate a rule!"
+            else:
+                self.destport = dport
+                self.destination = "127.0.0.1"
         else:
             self.destport = dport
+            if re.match("^[0-9]{1,3}(\.[0-9]{1,3}){3,3}$", dest):
+                self.destination = dest
+            else:
+                raise "Destination must be an IP address - later versions will support hostnames"
         
     def getrule(self, wan_interfaces):
         output = []

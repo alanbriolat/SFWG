@@ -179,6 +179,7 @@ to enable it"
                 output.extend(f.getrule(self.getopt("if_wan")))
             output.append('# ************************')
             output.append('')
+            output.append('')
 
         # Outgoing NAT
         if self.getopt("nat") and self.getopt("if_lan"):

@@ -128,7 +128,7 @@ if __name__ == "__main__":
         try:
             if forwards:
                 fw.enable_nat()
-                parsefile(forwards, (True, False, True, False), fw.addforward)
+                parsefile(forwards, (True, False, False, False), fw.addforward)
 
             if services:
                 parsefile(services, (True, False), fw.addservice)
