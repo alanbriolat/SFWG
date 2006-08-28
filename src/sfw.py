@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import commands
+import os
 
 from forward import *
 from service import *
@@ -190,5 +190,5 @@ class SFW:
             output.append("%s start" % (rc))
             output.append('')
 
-        return "\n".join(output)
+        return os.linesep.join(output)
 
