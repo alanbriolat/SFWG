@@ -1,0 +1,7 @@
+# Simple FireWall Generator forwards configuration
+#
+# <ports>       <protocols>     <destination>   <destport>  # <description>
+2222            tcp             -               22          # Open SSH on non-standard port
+2223            tcp             192.168.1.8     22          # Forward SSH on 2223 to desktop
+6881:6889       -               192.168.1.2     -           # Forward BitTorrent (UDP and TCP)
+#6881:6889      tcp,udp         192.168.1.2     -           # Same as above

@@ -14,15 +14,12 @@ install:
 	install -m 755 src/*.py ${INSTALL_DIR}/
 	ln -sf ${INSTALL_DIR}/sfwg.py ${BINDIR}/sfwg
 	install -d ${CONFIG_DIR}
-	install -b -S ".bak" -m 644 forwards.conf ${CONFIG_DIR}/
-	install -b -S ".bak" -m 644 services.conf ${CONFIG_DIR}/
+	install -m 644 *.conf.example ${CONFIG_DIR}/
 
 uninstall:
 	rm -rf ${INSTALL_DIR}
 	rm -f ${BINDIR}/sfwg
-
-distclean: uninstall
-	rm -rf ${CONFIG_DIR}
+	rm -f ${CONFIG_DIR}/*.conf.example
 
 clean:
 	rm -f src/*.pyc
