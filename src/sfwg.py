@@ -24,6 +24,8 @@ def showhelp():
 
 Usage: sfwg [OPTIONS] [OUTFILE]
 
+  -c, --configdir=DIR   Path to directory containing forwards.conf and 
+                        services.conf
   -f, --forwards=FILE   Path to file containing port forwarding configuration
   -i, --icmp            Allow ICMP packets on WAN interfaces
   -I, --icmp-rate=COUNT Maximum rate to allow ICMP packets on WAN interfaces
@@ -49,9 +51,9 @@ Created by %s""" % (__version__, __author__)
 
 # }}}
 
-shortopts = "f:iI:l:ns:w:x"
-longopts = ("forwards=", "icmp", "icmp-rate=", "lan=", "nat", "no-find", \
-        "services=", "wan=", "execute", "help", "version")
+shortopts = "c:f:iI:l:ns:w:x"
+longopts = ("configdir=", "forwards=", "icmp", "icmp-rate=", "lan=", "nat", \
+        "no-find", "services=", "wan=", "execute", "help", "version")
 
 opts, args = getopt.getopt(sys.argv[1:], shortopts, longopts)
 
@@ -62,8 +64,8 @@ if __name__ == "__main__":
         showversion()
     else:
 
-        forwards = None
-        services = None
+        forwards = []
+        services = []
         outfile = None
         findconfig = True
         execute = False
@@ -71,10 +73,17 @@ if __name__ == "__main__":
         fw = SFW()
 
         for opt, val in opts:
-            if opt in ("--forwards", "-f"):
+            if opt in ("--configdir", "-c"):
+                f = os.path.join(val, 'forwards.conf')
+                s = os.path.join(val, 'services.conf')
+                if os.path.isfile(f) and os.access(f, os.R_OK):
+                    forwards.append(f)
+                if os.path.isfile(s) and os.access(s, os.R_OK):
+                    forwards.append(s)
+            elif opt in ("--forwards", "-f"):
                 path = os.path.abspath(val)
                 if os.path.isfile(path) and os.access(path, os.R_OK):
-                    forwards = path
+                    forwards.append(path)
             elif opt in ("--icmp", "-i"):
                 fw.enable_icmp()
             elif opt in ("--icmp-rate", "-I"):
@@ -88,50 +97,42 @@ if __name__ == "__main__":
             elif opt in ("--services", "-s"):
                 path = os.path.abspath(val)
                 if os.path.isfile(path) and os.access(path, os.R_OK):
-                    services = path
+                    services.append(path)
             elif opt in ("--wan", "-w"):
                 fw.wan_interfaces(val)
             elif opt in ("--execute", "-x"):
                 execute = True
 
         if not forwards:
-            localconf = os.path.join(os.getcwd(), 'forwards.conf')
             globalconf = '/etc/sfwg/forwards.conf'
-            if findconfig and os.path.isfile(localconf) and os.access(localconf, os.R_OK):
-                print >>sys.stderr, "forwards.conf not specified but found in current directory, using this instead"
-                print >>sys.stderr, "Use --no-find if you do not want to look for a config"
-                forwards = localconf
-            elif findconfig and os.path.isfile(globalconf) and os.access(globalconf, os.R_OK):
+            if findconfig and os.path.isfile(globalconf) and os.access(globalconf, os.R_OK):
                 print >>sys.stderr, "forwards.conf not specified but found in /etc/sfwg, using this instead"
                 print >>sys.stderr, "Use --no-find if you do not want to look for a config"
-                forwards = globalconf
+                forwards.append(globalconf)
             else:
                 print >>sys.stderr, "No forwards file specified - assuming no forwarding"
 
         if not services:
-            localconf = os.path.join(os.getcwd(), 'services.conf')
             globalconf = '/etc/sfwg/services.conf'
-            if findconfig and os.path.isfile(localconf) and os.access(localconf, os.R_OK):
-                print >>sys.stderr, "services.conf not specified but found in current directory, using this instead"
-                print >>sys.stderr, "Use --no-find if you do not want to look for a config"
-                services = localconf
-            elif findconfig and os.path.isfile(globalconf) and os.access(globalconf, os.R_OK):
+            if findconfig and os.path.isfile(globalconf) and os.access(globalconf, os.R_OK):
                 print >>sys.stderr, "services.conf not specified but found in /etc/sfwg, using this instead"
                 print >>sys.stderr, "Use --no-find if you do not want to look for a config"
-                services = globalconf
+                services.append(globalconf)
             else:
                 print >>sys.stderr, "No services file specified - assuming no WAN-accessible services"
 
-        if not findconfig and not services and not findconfig:
+        if not findconfig and not services and not forwards:
             print >>sys.stderr, "One anally-retentive firewall coming right up!"
             
         try:
             if forwards:
                 fw.enable_nat()
-                parsefile(forwards, (True, False, False, False), fw.addforward)
+                for path in forwards:
+                    parsefile(path, (True, False, False, False), fw.addforward)
 
             if services:
-                parsefile(services, (True, False), fw.addservice)
+                for path in services:
+                    parsefile(path, (True, False), fw.addservice)
         except ConfigError, e:
             print >>sys.stderr, "%s\nin %s at line %s" % (e.message, e.file, e.linenum)
             raise
@@ -162,7 +163,6 @@ if __name__ == "__main__":
 
             if execute:
                 if os.geteuid() == 0:
-                    #commands.getoutput(fw.makescript())
                     os.system(fw.makescript())
                 else:
                     print >>sys.stderr, "Must be root to modify iptables settings"

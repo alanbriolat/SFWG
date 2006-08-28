@@ -1,8 +1,7 @@
-Allow forwarding to another port on localhost implicitly (by omitting the destination address)
 Process and validate ports instead of passing them directly to --dport
 Test to see if NAT between LAN interfaces is necessary
 Move /proc/sys/net/ipv4/ip_forward check to depend on --execute option - can generate firewalls on machines not using them!
-Allow multiple --services and --forwards files
 Make generated file executable
 Write a manpage
 Make rc script usage optional, make rc-script path configurable
+Add port overlap checking to SFW.addservice() and SFW.addforward() ?
