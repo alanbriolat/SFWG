@@ -79,7 +79,7 @@ if __name__ == "__main__":
                 if os.path.isfile(f) and os.access(f, os.R_OK):
                     forwards.append(f)
                 if os.path.isfile(s) and os.access(s, os.R_OK):
-                    forwards.append(s)
+                    services.append(s)
             elif opt in ("--forwards", "-f"):
                 path = os.path.abspath(val)
                 if os.path.isfile(path) and os.access(path, os.R_OK):
