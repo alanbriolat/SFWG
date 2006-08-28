@@ -15,6 +15,7 @@ class SFW:
     options = { \
             "nat":  False, \
             "icmp": False, \
+            "icmp_rate": None, \
             "if_wan": ["eth0"], \
             "if_lan": None, \
             "rc": True, \
@@ -145,10 +146,20 @@ to enable it"
             output.append('iptables -A FORWARD -m state --state ESTABLISHED,RELATED -j ACCEPT')
             output.append('')
 
-        # Allow ICMP packets from all interfaces
+        # Allow ICMP packets from WAN interfaces
         if self.getopt("icmp"):
-            output.append('# Allow ICMP packets from all interfaces')
-            output.append('iptables -A INPUT -p icmp -j ACCEPT')
+            if self.getopt("icmp_rate"):
+                output.append('# Allow ICMP packets from WAN interfaces (rate-limited)')
+                for i in self.getopt("if_wan"):
+                    output.append('iptables -A INPUT -i %s -p icmp -m recent --set' % (i))
+                    output.append(\
+                            'iptables -A INPUT -i %s -p icmp -m recent --update --seconds 60 --hitcount %s -j DROP' \
+                            % (i, self.getopt("icmp_rate")))
+                    output.append('iptables -A INPUT -i %s -p icmp -j ACCEPT' % (i))
+            else:
+                output.append('# Allow ICMP packets from WAN interfaces')
+                for i in self.getopt("if_wan"):
+                    output.append('iptables -A INPUT -i %s -p icmp -j ACCEPT' % (i))
             output.append('')
 
         if self.services:

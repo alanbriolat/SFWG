@@ -26,6 +26,8 @@ Usage: sfwg [OPTIONS] [OUTFILE]
 
   -f, --forwards=FILE   Path to file containing port forwarding configuration
   -i, --icmp            Allow ICMP packets on WAN interfaces
+  -I, --icmp-rate=COUNT Maximum rate to allow ICMP packets on WAN interfaces
+                        (packets per second)
   -l, --lan=IF[,IF...]  All interfaces from which traffic is trusted
   -n, --nat             Use Network Address Translation - automatically enabled
                         if port forwarding is used
@@ -47,8 +49,8 @@ Created by %s""" % (__version__, __author__)
 
 # }}}
 
-shortopts = "f:il:ns:w:x"
-longopts = ("forwards=", "icmp", "lan=", "nat", "no-find", \
+shortopts = "f:iI:l:ns:w:x"
+longopts = ("forwards=", "icmp", "icmp-rate=", "lan=", "nat", "no-find", \
         "services=", "wan=", "execute", "help", "version")
 
 opts, args = getopt.getopt(sys.argv[1:], shortopts, longopts)
@@ -75,6 +77,8 @@ if __name__ == "__main__":
                     forwards = path
             elif opt in ("--icmp", "-i"):
                 fw.enable_icmp()
+            elif opt in ("--icmp-rate", "-I"):
+                fw.setopt("icmp_rate", val)
             elif opt in ("--lan", "-l"):
                 fw.lan_interfaces(val)
             elif opt in ("--nat", "-n"):
