@@ -4,11 +4,14 @@ import os, string
 
 class ConfigError:
     message = None
+    file = None
     linenum = None
-    line = None
     requiredargs = None
-    def __init__(self, info):
-        self.message, self.linenum, self.line, self.requiredargs = info
+    def __init__(self, message, file, linenum, requiredargs):
+        self.message = message
+        self.file = file
+        self.linenum = linenum
+        self.requiredargs = requiredargs
 
 def parsefile(path, requiredargs, callback = None):
     """
@@ -63,7 +66,7 @@ def parsefile(path, requiredargs, callback = None):
                 # Error if not enough arguments
                 if len(args) < argcount:
                     raise ConfigError, \
-                            (("Bad configuration line - not enough arguments", l, line, requiredargs))
+                            ("Bad configuration line - not enough arguments", path, l, requiredargs)
                 
                 # Replace '-' arguments with None
                 while args.count('-'):
@@ -73,7 +76,7 @@ def parsefile(path, requiredargs, callback = None):
                 for i in range(0, argcount):
                     if requiredargs[i] and not args[i]:
                         raise ConfigError, \
-                                (("Configuration line does not have required arguments", l, line, requiredargs))
+                                ("Configuration line does not have required arguments", path, l, requiredargs)
                 parsed.append((args, desc))
 
         if callback:
@@ -84,4 +87,4 @@ def parsefile(path, requiredargs, callback = None):
 
     else:
         raise ConfigError, \
-                (("File %s does not exist or is not readable" % (path), 0, None, None))
+                ("File does not exist or is not readable" % (path), path, 0, None)

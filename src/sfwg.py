@@ -121,12 +121,16 @@ if __name__ == "__main__":
         if not findconfig and not services and not findconfig:
             print >>sys.stderr, "One anally-retentive firewall coming right up!"
             
-        if forwards:
-            fw.enable_nat()
-            parsefile(forwards, (True, False, True, False), fw.addforward)
+        try:
+            if forwards:
+                fw.enable_nat()
+                parsefile(forwards, (True, False, True, False), fw.addforward)
 
-        if services:
-            parsefile(services, (True, False), fw.addservice)
+            if services:
+                parsefile(services, (True, False), fw.addservice)
+        except ConfigError, e:
+            print >>sys.stderr, "%s\nin %s at line %s" % (e.message, e.file, e.linenum)
+            raise
 
         try:
             if len(args) > 0:
