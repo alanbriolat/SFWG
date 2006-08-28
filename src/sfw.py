@@ -88,12 +88,6 @@ class SFW:
             if self.getopt("if_lan") and i in self.getopt("if_lan"):
                 raise SFWError, "Interface %s defined as WAN and LAN!" % (i)
 
-        if (self.getopt("nat") or self.forwards) \
-                and int(commands.getoutput('cat /proc/sys/net/ipv4/ip_forward')) == 0:
-            raise SFWError, "You do not have forwarding enabled in your kernel - NAT and \
-forwarding rules will not work.\nTry 'echo 1 > /proc/sys/net/ipv4/ip_forward' \
-to enable it"
-
     def makescript(self):
         self.checkconflicts()
 

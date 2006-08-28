@@ -2,7 +2,7 @@
 __author__ = "Alan Briolat <alan@thev0id.net>"
 __version__ = "0.1.1"
 
-import getopt, sys, os
+import getopt, sys, os, commands
 
 from sfw import *
 from configfile import *
@@ -168,7 +168,15 @@ if __name__ == "__main__":
             # user then execute the script
             if execute:
                 if os.geteuid() == 0:
-                    os.system(fw.makescript())
+                    # Do not execute if forwarding rules won't work here
+                    if (fw.getopt("nat") or fw.forwards) \
+                            and int(commands.getoutput('cat /proc/sys/net/ipv4/ip_forward')) == 0:
+                        print >>sys.stderr, "\
+You do not have forwarding enabled in your system config but have NAT and/or \n\
+forwarding rules enabled.  The generated script will not work on this computer.\n\
+Try 'echo 1 > /proc/sys/net/ipv4/ip_forward' to enable it"
+                    else:
+                        os.system(fw.makescript())
                 else:
                     print >>sys.stderr, "Must be root to modify iptables settings"
 
