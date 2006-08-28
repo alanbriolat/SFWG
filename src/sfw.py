@@ -173,10 +173,7 @@ to enable it"
         if self.getopt("nat") and self.getopt("if_lan"):
             output.append('# Outgoing NAT masquerading')
             for i in self.getopt("if_wan"):
-                for j in self.getopt("if_lan"):
-                    output.append(\
-                            "iptables -t nat -A POSTROUTING -i %s -o %s -j MASQUERADE" \
-                            % (j, i))
+                output.append("iptables -t nat -A POSTROUTING -o %s -j MASQUERADE" % (i))
             output.append('')
 
         # more rc/init.d script stuff
