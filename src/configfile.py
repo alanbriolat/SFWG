@@ -63,7 +63,7 @@ def parsefile(path, requiredargs, callback = None):
                 # Error if not enough arguments
                 if len(args) < argcount:
                     raise ConfigError, \
-                            ("Bad configuration line - not enough arguments", l, line, requiredargs)
+                            (("Bad configuration line - not enough arguments", l, line, requiredargs))
                 
                 # Replace '-' arguments with None
                 while args.count('-'):
@@ -73,7 +73,7 @@ def parsefile(path, requiredargs, callback = None):
                 for i in range(0, argcount):
                     if requiredargs[i] and not args[i]:
                         raise ConfigError, \
-                                ("Configuration line does not have required arguments", l, line, requiredargs)
+                                (("Configuration line does not have required arguments", l, line, requiredargs))
                 parsed.append((args, desc))
 
         if callback:
@@ -84,4 +84,4 @@ def parsefile(path, requiredargs, callback = None):
 
     else:
         raise ConfigError, \
-                ("File %s does not exist or is not readable" % (path), 0, None, None)
+                (("File %s does not exist or is not readable" % (path), 0, None, None))
