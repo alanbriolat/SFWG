@@ -75,7 +75,7 @@ class Forward:
                 if self.destport:
                     preroute += ":%s" % (self.destport)
                 forward = \
-                        "iptable -A FORWARD -i %s -p %s --dport %s -j ACCEPT" \
+                        "iptables -A FORWARD -i %s -p %s --dport %s -j ACCEPT" \
                         % (i, p, ports)
                 output.append(preroute)
                 output.append(forward)

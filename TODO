@@ -4,3 +4,4 @@ Process and validate ports instead of passing them directly to --dport
 Test to see if NAT between LAN interfaces is necessary
 Check /proc/sys/net/ipv4/ip_forward == 1 if using forwarding
 Allow multiple --services and --forwards files
+Make generated file executable
