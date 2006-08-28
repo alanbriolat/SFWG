@@ -103,23 +103,18 @@ if __name__ == "__main__":
             elif opt in ("--execute", "-x"):
                 execute = True
 
-        if not forwards:
-            globalconf = '/etc/sfwg/forwards.conf'
-            if findconfig and os.path.isfile(globalconf) and os.access(globalconf, os.R_OK):
-                print >>sys.stderr, "forwards.conf not specified but found in /etc/sfwg, using this instead"
-                print >>sys.stderr, "Use --no-find if you do not want to look for a config"
-                forwards.append(globalconf)
-            else:
-                print >>sys.stderr, "No forwards file specified - assuming no forwarding"
+        if not forwards and not services and findconfig:
+            gforwards = '/etc/sfwg/forwards.conf'
+            gservices = '/etc/sfwg/services.conf'
 
-        if not services:
-            globalconf = '/etc/sfwg/services.conf'
-            if findconfig and os.path.isfile(globalconf) and os.access(globalconf, os.R_OK):
-                print >>sys.stderr, "services.conf not specified but found in /etc/sfwg, using this instead"
-                print >>sys.stderr, "Use --no-find if you do not want to look for a config"
-                services.append(globalconf)
-            else:
-                print >>sys.stderr, "No services file specified - assuming no WAN-accessible services"
+            if os.path.isfile(gforwards) and os.access(gforwards, os.R_OK):
+                print >>sys.stderr, "No forwards file specified, using %s" % (gforwards)
+                forwards.append(gforwards)
+            if os.path.isfile(gservices) and os.access(gservices, os.R_OK):
+                print >>sys.stderr, "No services file specified, using %s" % (gservices)
+                services.append(gservices)
+            if forwards or services:
+                print >>sys.stderr, "A default configuration path has been used - to disable this use --no-find"
 
         if not findconfig and not services and not forwards:
             print >>sys.stderr, "One anally-retentive firewall coming right up!"
