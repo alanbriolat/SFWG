@@ -1,6 +1,5 @@
 Process and validate ports instead of passing them directly to --dport
 Test to see if NAT between LAN interfaces is necessary
-Make generated file executable
 Write a manpage
 Make rc script usage optional, make rc-script path configurable
 Test ICMP rate limiting

@@ -151,12 +151,14 @@ if __name__ == "__main__":
                         fo = open(path, "w")
                         print >>fo, fw.makescript()
                         fo.close()
+                        os.system('chmod +x %s' % (path))
                     else:
                         print >>sys.stderr, "You do not have permission to modify %s" % (path)
                 elif os.path.isdir(os.path.dirname(path)) and os.access(os.path.dirname(path), os.W_OK):
                     fo = open(path, "w")
                     print >>fo, fw.makescript()
                     fo.close()
+                    os.system('chmod +x %s' % (path))
                 else:
                     print >>sys.stderr, "Could not create %s!" % (path)
                     print >>sys.stderr, "Please check that the file or its parent directory exists and is writable"
