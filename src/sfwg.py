@@ -1,6 +1,6 @@
 #!/usr/bin/python
 __author__ = "Alan Briolat <alan@thev0id.net>"
-__version__ = "0.1.1"
+__version__ = "0.1.3"
 
 import getopt, sys, os, commands
 
@@ -34,6 +34,8 @@ Usage: sfwg [OPTIONS] [CONFIGDIR...]
       --no-find         Do not check current directory and /etc/sfwg for 
                         services.conf and forwards.conf if not specified
   -o, --outfile=FILE    File to save the resulting script to
+  -r, --rc              Use rc/init.d scripts to stop/start iptables
+  -R, --rc-path=FILE    Override rc script path (default: /etc/init.d/iptables)
   -s, --services=FILE   Path to file containing configuration for ports on 
                         which connections should be accepted
   -w, --wan=IF[,IF...]  All interfaces from which traffic is untrusted
@@ -52,9 +54,9 @@ Created by %s""" % (__version__, __author__)
 
 if __name__ == "__main__":
 
-    shortopts = "f:iI:l:no:s:w:x"
+    shortopts = "f:iI:l:no:rR:s:w:x"
     longopts = ("forwards=", "icmp", "icmp-rate=", "lan=", "nat", "outfile=", \
-            "no-find", "services=", "wan=", "execute", "help", "version")
+            "no-find", "rc", "rc-path=", "services=", "wan=", "execute", "help", "version")
 
     opts, args = getopt.getopt(sys.argv[1:], shortopts, longopts)
 
@@ -91,6 +93,10 @@ if __name__ == "__main__":
                 findconfig = False
             elif opt in ("--outfile", "-o"):
                 outfile = os.path.abspath(val)
+            elif opt in ("--rc", "-r"):
+                fw.setopt("rc", True)
+            elif opt in ("--rc-path", "-R"):
+                fw.setopt("rc_path", val)
             elif opt in ("--services", "-s"):
                 path = os.path.abspath(val)
                 if os.path.isfile(path) and os.access(path, os.R_OK):

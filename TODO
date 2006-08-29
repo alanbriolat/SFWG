@@ -1,7 +1,6 @@
 Process and validate ports instead of passing them directly to --dport
 Test to see if NAT between LAN interfaces is necessary
 Write a manpage
-Make rc script usage optional, make rc-script path configurable
 Test ICMP rate limiting
 
 Add port overlap checking to SFW.addservice() and SFW.addforward() ?

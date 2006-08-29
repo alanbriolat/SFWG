@@ -18,7 +18,7 @@ class SFW:
             "icmp_rate": None, \
             "if_wan": ["eth0"], \
             "if_lan": None, \
-            "rc": True, \
+            "rc": False, \
             "rc_path": "/etc/init.d/iptables", \
             }
 
