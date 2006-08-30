@@ -1,0 +1,101 @@
+Simple FireWall Generator Readme
+================================
+
+Introduction
+------------
+Simple FireWall Generator (SFWG) was written in order to facilitate the rapid 
+creation of secure iptables-based firewalls via a few simple command-line 
+options, and 2 simple configuration files if open ports are desired.  The 
+result of running the tool is a shell script that sets up the iptables rules 
+required to have the desired effect.
+
+This tool is aimed at relatively simple server and router setups.  All alpha 
+testing at the moment is being done on my home router/server that has three
+network interfaces, one which is essentially connected to the Internet, and the
+other two being bridged with each other providing a wired and wireless LAN.
+The rules generated are heavily based on my previous working firewall script 
+for this machine, and the first target was a generated firewall being a drop-in
+replacement for the old script.
+
+However, I am also aiming to give the tool a broader scope, while keeping 
+within the scope of "simple", and hopefully the generated firewall scripts 
+should work on systems with many interfaces, providing that they can all be 
+classified as WAN or LAN.
+
+I would greatly appreciate *any* feedback on the suitability of the generated
+scripts, and possible improvements, especially with regards to larger systems 
+(more than 2 independant interfaces), as I do not have such resources at my
+disposal.
+
+Please send all feedback/questions/hate-mail to alan@thev0id.net
+
+
+What SFWG is not
+-----------------
+Before my inbox fills up with "why doesn't SFWG do this?" questions, I will say
+this.  SFWG is _not_ supposed to be a replacement for other much more mature 
+and configurable utilities such as Shorewall.  It is not going to suit every 
+possible situation.  It is aimed mainly at the most common configurations where
+it would be useful to have a fully working firewall with minimal effort.
+
+It is not designed with novices in mind.  Yes, it makes things quicker and 
+simpler, however it still requires an awareness of things like the various 
+protocols, what NAT is, etc.
+
+
+Installation
+------------
+Firstly you will need the latest source.  You probably already have that if you
+are reading this, but if not, the latest stable tarball and instructions for 
+getting the latest version from SVN can be found at:
+
+    http://thev0id.net/projects/sfwg
+
+A Makefile is provided so that installation should be as simple as running:
+
+    make install
+
+as root.
+
+However, installation is not necessary.  Assuming the current directory is that
+containing this file, you can also use the script from ./src/sfwg.py
+
+
+Usage
+-----
+There are quite a few ways to use this script, too many to list here and 
+probably some I haven't even thought of yet.
+
+Use the --help option to get a full list of the available options, and read the
+example configuration files services.conf.example and forwards.conf.example
+(can be found in /etc/sfwg if you installed using the makefile) for the syntax
+for allowing local services and forwarding ports to other machines.
+
+The two most common base configurations are likely to be that of a single 
+machine with no web-accessible services, and that of a 2-interface router.
+
+The first would only require one option (--wan) to specify the network 
+interface, and not even that if the interface is eth0 (the default).  For 
+example:
+
+    sfwg --wan=ppp0 --outfile=myfirewall.sh
+
+should be sufficient to protect a typical machine connected to the Internet via
+dial-up.
+
+The simple NAT-enabled router (based on 2 ethernet interfaces):
+
+    sfwg --wan=eth0 --lan=eth1 --nat --outfile=routerfirewall.sh
+
+Or a NAT-enabled 3-interface router (2 ethernet, one Madwifi wireless):
+
+    sfwg --wan=eth0 --lan=eth1,ath0 --nat --outfile=routerfirewall.sh
+
+Made even quicker if you remember the short options:
+
+    sfwg -w eth0 -l eth1,ath0 -n -o routerfirewall.sh
+
+
+Bugs
+----
+Please report any bugs to alan@thev0id.net.  Fixes/patches are also very welcome.
