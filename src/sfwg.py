@@ -1,6 +1,6 @@
 #!/usr/bin/python
-__author__ = "Alan Briolat <alan@thev0id.net>"
-__version__ = "0.1.3"
+__author__ = "Alan Briolat <alan@codescape.net>"
+__version__ = "0.1.4"
 
 import getopt, sys, os, commands
 
@@ -155,14 +155,14 @@ if __name__ == "__main__":
                         print >>sys.stderr, "Backing it up to %s.bak" % (path)
                         os.rename(path, path + '.bak')
                         fo = open(path, "w")
-                        print >>fo, fw.makescript()
+                        print >>fo, fw.makescript(" ".join(sys.argv[1:]))
                         fo.close()
                         os.system('chmod +x %s' % (path))
                     else:
                         print >>sys.stderr, "You do not have permission to modify %s" % (path)
                 elif os.path.isdir(os.path.dirname(path)) and os.access(os.path.dirname(path), os.W_OK):
                     fo = open(path, "w")
-                    print >>fo, fw.makescript()
+                    print >>fo, fw.makescript(" ".join(sys.argvi[1:]))
                     fo.close()
                     os.system('chmod +x %s' % (path))
                 else:
@@ -170,7 +170,7 @@ if __name__ == "__main__":
                     print >>sys.stderr, "Please check that the file or its parent directory exists and is writable"
             # If no output file, print to stdout
             else:
-                print fw.makescript()
+                print  fw.makescript(" ".join(sys.argv[1:]))
             
             # If the execute option was passed, check privileges of the current
             # user then execute the script

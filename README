@@ -1,5 +1,5 @@
-Simple FireWall Generator Readme
-================================
+Simple FireWall Generator
+=========================
 
 Introduction
 ------------
@@ -27,7 +27,7 @@ scripts, and possible improvements, especially with regards to larger systems
 (more than 2 independant interfaces), as I do not have such resources at my
 disposal.
 
-Please send all feedback/questions/hate-mail to alan@thev0id.net
+Please send all feedback/questions/hate-mail to <alan@codescape.net>
 
 
 What SFWG is not
@@ -47,9 +47,8 @@ Installation
 ------------
 Firstly you will need the latest source.  You probably already have that if you
 are reading this, but if not, the latest stable tarball and instructions for 
-getting the latest version from SVN can be found at:
-
-    http://thev0id.net/projects/sfwg
+getting the latest version from SVN can be found at 
+<http://thev0id.net/projects/sfwg>
 
 A Makefile is provided so that installation should be as simple as running:
 
@@ -98,4 +97,4 @@ Made even quicker if you remember the short options:
 
 Bugs
 ----
-Please report any bugs to alan@thev0id.net.  Fixes/patches are also very welcome.
+Please report any bugs to <alan@codescape.net>.  Fixes/patches are also very welcome.
