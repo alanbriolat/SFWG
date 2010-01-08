@@ -1,89 +1,81 @@
 #!/usr/bin/python
 
-import re
+class ForwardError:
+    def __init__(self, message):
+        self.message = message
 
 class Forward:
-    
-    ports = None
-    protocols = None
-    destination = None
-    destport = None
-    description = None
+    def __init__(self, params):
+        #   Init the instance vars
+        self.ports = None
+        self.protocols = []
+        self.interfaces = None
+        self.destination = "127.0.0.1"
+        self.destport = None
+        self.description = None
 
-    def __init__(self, params, desc):
-        port, proto, dest, dport = params
-        self.description = desc
-    
-        # Check the validity of the port definition
-        if not port:
-            raise "You must define some ports to open!"
-        else:
-            self.ports = port
-        """
-            try:
-                start, finish = port.split(':')
-            except ValueError:
-                start = finish = port
-
-            if 0 < int(start) < 65536 and 0 < int(finish) < 65536:
-                if int(finish) < int(start):
-                    raise "End port higher than start port"
-                else:
-                    self.ports = start, finish
-            else:
-                raise "Port number out of range"
-        """
-
-        # Check which protocols are being allowed
-        if not proto:
-            self.protocols = "tcp", "udp"
-        else:
-            protocols = []
-            for p in proto.split(','):
-                p = p.strip().lower()
+        #   Check protocols
+        if params["protocols"] and not params["protocols"] == "*":
+            protocols = [x.strip() for x in params["protocols"].split(",")]
+            for p in protocols:
                 if p in ("tcp", "udp"):
-                    protocols.append(p)
-            if len(protocols) == 0:
-                raise "No valid protocols were defined - use 'tcp', 'udp' or 'tcp,udp', or \
-                        leave the field blank (will use both tcp and udp by default)"
-            else:
-                self.protocols = set(protocols)
-
-        # Work out destination
-        if not dest:
-            if not dport:
-                # No dest (localhost) + no port changing = pointless rule!
-                raise "No destination and no destport specified - this will not generate a rule!"
-            else:
-                self.destport = dport
-                self.destination = "127.0.0.1"
+                    self.protocols.append(p)
+                else:
+                    raise ForwardError("Unrecognised protocol: %s" % p)
         else:
-            self.destport = dport
-            if re.match("^[0-9]{1,3}(\.[0-9]{1,3}){3,3}$", dest):
-                self.destination = dest
-            else:
-                raise "Destination must be an IP address - later versions will support hostnames"
-        
-    def getrule(self, wan_interfaces):
+            self.protocols = ["tcp", "udp"]
+
+        #   Check ports
+        if not params["ports"]:
+            raise ForwardError("You must define some ports to forward")
+        elif not params["ports"] == "*":
+            self.ports = params["ports"]
+
+        #   Interfaces
+        if params["interfaces"] and not params["interfaces"] == "*":
+            self.interfaces = [x.strip() for x in params["interfaces"].split(',')]
+        #   Destination
+        if params["destination"]:
+            self.destination = params["destination"]
+        #   Destport
+        if params["destport"]:
+            self.destport = params["destport"]
+        #   Description
+        if params["description"]:
+            self.description = params["description"]
+
+        #   Some validation
+        if self.destination == "127.0.0.1" and not self.destport:
+            raise ForwardError("No change of destination - pointless forward!")
+
+    def getrule(self):
         output = []
 
         if self.description:
             output.append("# " + self.description)
 
-        ports = self.ports
-
-        for p in self.protocols:
-            for i in wan_interfaces:
-                preroute = \
-                        "iptables -t nat -A PREROUTING -i %s -p %s --dport %s -j DNAT --to %s" \
-                        % (i, p, ports, self.destination)
+        if self.interfaces:
+            for i in self.interfaces:
+                for p in self.protocols:
+                    preroute = "${IPTABLES} -t nat -A PREROUTING -p %s --dport %s -j DNAT --to %s" \
+                            % (p, self.ports, self.destination)
+                    if self.destport:
+                        preroute += ":" + self.destport
+                    forward = "${IPTABLES} -A FORWARD -p %s --dport %s -j ACCEPT" \
+                            % (p, self.ports)
+                    output.append(preroute)
+                    output.append(forward)
+        else:
+            for p in self.protocols:
+                preroute = "${IPTABLES} -t nat -A PREROUTING -p %s --dport %s -j DNAT --to %s" \
+                        % (p, self.ports, self.destination)
                 if self.destport:
-                    preroute += ":%s" % (self.destport)
-                forward = \
-                        "iptables -A FORWARD -i %s -p %s --dport %s -j ACCEPT" \
-                        % (i, p, ports)
+                    preroute += ":" + self.destport
+                forward = "${IPTABLES} -A FORWARD -p %s --dport %s -j ACCEPT" \
+                        % (p, self.ports)
                 output.append(preroute)
                 output.append(forward)
+
         output.append('')
 
         return output

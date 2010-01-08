@@ -4,3 +4,29 @@ Write a manpage
 Test ICMP rate limiting
 
 Add port overlap checking to SFW.addservice() and SFW.addforward() ?
+
+New config file format:
+Forwards :    ports|protocols|iface|destination|destport|description
+*   Empty ports = dead rule, * = all ports
+*   Empty protocols = * = tcp,udp, else whatever is specified split with ,
+*   Empty iface = * = all interfaces
+*   Empty dest = 127.0.0.1
+*   Empty destport = no port redirect
+*   Empty desc = no desc
+
+e.g.        6667-6669|tcp||123.123.123.123||IRCd forwards
+
+Services :   ports|protocols|iface|from_ip|from_mac|description
+*   Empty ports = * = all ports
+*   Empty protocols = * = all protocols
+*   Empty iface = * = all interfaces
+*   Empty from_ip = * = no restriction
+*   Empty from_mac = * = no restriction
+*   Empty desc = no desc
+
+e.g.        ||_LAN_|192.168.0.2|00:00:00:00:00:00|Allow all from foo on LAN
+
+Placeholders:
+*   iface
+    *   _WAN_ - all --wan interfaces
+    *   _LAN_ - all --lan interfaces

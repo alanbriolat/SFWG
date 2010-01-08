@@ -2,89 +2,92 @@
 
 import os, string
 
-class ConfigError:
-    message = None
-    file = None
-    linenum = None
-    requiredargs = None
-    def __init__(self, message, file, linenum, requiredargs):
+class ConfigFileError:
+    def __init__(self, message, file, line):
         self.message = message
         self.file = file
-        self.linenum = linenum
-        self.requiredargs = requiredargs
+        self.line = line
 
-def parsefile(path, requiredargs, callback = None):
-    """
-    Parse a configuration file into a list of configuration lines.  Each line is parsed
-    into a tuple containing a list of args, and a description
 
-    requiredargs is a tuple specifying both the number of args and if they are
-    required, e.g. (True, False, False) means 3 arguments, only the first is required
+class ConfigFile:
+    def __init__(self, path, keys, splitchar = '|'):
+        """
+        Get the path to the configuration file, sort out param keys
 
-    Arguments in config files are separated by whitespace, with an empty argument being
-    denoted by a '-'
+        path:   path to the config file - will be resolved into an absolute path
+        keys:   tuple of dict 'keys' for parameter names - suffixing with ! makes a
+                parameter required
+        """
+        self.path = None
+        self.argcount = None
+        self.args = []
+        self.required_args = []
+        self.splitchar = '|'
 
-    Example:
-        ...
-        arg1    -            arg3      # Description
-        ...
-        
-        parsefile('/path/to/file', (True, False, True))
-    gives:
-        (
-            (['arg1', None, 'arg3'], 'Description')
-        )
+        #   Check the file exists and is readable
+        path = os.path.abspath(path)
+        if not os.path.isfile(path):
+            raise ConfigFileError("File does not exist", path, 0)
+        elif not os.access(path, os.R_OK):
+            raise ConfigFileError("File not readable", path, 0)
+        else:
+            self.path = path
 
-    If a callback function is specified, it will be called with the arg list 
-    and the description as the first 2 arguments for each entry
-    """
-    path = os.path.abspath(path)
-    argcount = len(requiredargs)
+        #   Sort out arg list
+        for k in keys:
+            if k[len(k) - 1:] == "!":
+                k = k.rstrip("!")
+                self.args.append(k)
+                self.required_args.append(k)
+            else:
+                self.args.append(k)
 
-    if os.path.isfile(path) and os.access(path, os.R_OK):
-        
+        #   Number of args to split into
+        self.argcount = len(self.args)
+
+        #   Characted for delimiting fields
+        self.splitchar = splitchar
+
+
+    def getlines(self):
+        """
+        Get a list of all the lines split into their respective fields
+
+        Throws a ConfigFileError on failure
+        """
+        #   Initialize an empty list for the parsed lines
         parsed = []
-
-        # Read the file into a list
-        lines = open(path, 'r').read().splitlines()
-
-        l = 0
+        
+        #   Get the lines from the file
+        lines = open(self.path, 'r').read().splitlines()
+        linenum = 0
 
         for line in lines:
-            l += 1
+            #   Keep line number for error messages!
+            linenum += 1
+            
+            #   Strip whitespace from either end
+            line = line.strip()
+            #   Skip self line if its a comment or empty
+            if len(line) == 0 or line[0] == '#':
+                continue;
+            
+            #   Split line into parts
+            parts = line.split(self.splitchar, self.argcount - 1)
+            #   Error on not enough args
+            if len(parts) < self.argcount:
+                raise ConfigFileError("Configuration line does not have enough parameters - \
+                        expected %s" % self.argcount, self.path, linenum)
+                continue
+            #   Strip parameters
+            parts = [string.strip(p) for p in parts]
+            #   Turn into a dict
+            parts_dict = dict(zip(self.args, parts))
+            #   Check for missing args
+            for a in self.required_args:
+                if not parts_dict[a]:
+                    raise ConfigFileError("Parameter '%s' is required!" % a, self.path, linenum)
+            #   No problems - lets add it and go onto the next one!
+            parsed.append(parts_dict)
 
-            # Split lines into args and description
-            line_split = line.split('#', 1)
-            args = line_split[0].strip()
-            desc = None
-            if len(line_split) > 1:
-                desc = line_split[1].strip()
-
-            # If we have some args, process them!
-            if args:
-                args = string.split(args, maxsplit=(argcount - 1))
-                # Error if not enough arguments
-                if len(args) < argcount:
-                    raise ConfigError, \
-                            ("Bad configuration line - not enough arguments", path, l, requiredargs)
-                
-                # Replace '-' arguments with None
-                while args.count('-'):
-                    args[args.index('-')] = None
-
-                # Check required args exist
-                for i in range(0, argcount):
-                    if requiredargs[i] and not args[i]:
-                        raise ConfigError, \
-                                ("Configuration line does not have required arguments", path, l, requiredargs)
-                parsed.append((args, desc))
-
-        if callback:
-            for args, desc in parsed:
-                callback(args, desc)
-        else:
-            return parsed
-
-    else:
-        raise ConfigError, \
-                ("File does not exist or is not readable" % (path), path, 0, None)
+        return parsed

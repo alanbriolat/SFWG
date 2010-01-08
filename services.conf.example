@@ -1,6 +1,0 @@
-# Simple FireWall Generator services configuration
-#
-# <ports>       <protocols>     # <description>
-22              tcp             # Accept SSH connections
-80              tcp             # HTTP
-443             tcp             # HTTPS
